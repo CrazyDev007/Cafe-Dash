@@ -1139,6 +1139,7 @@ MonoBehaviour:
   coffeeMachine: {fileID: 1967084327}
   playerController: {fileID: 1851587891}
   customerManager: {fileID: 1811535592}
+  beanResource: {fileID: 2003354945}
 --- !u!4 &1844255790
 Transform:
   m_ObjectHideFlags: 0
