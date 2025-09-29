@@ -173,6 +173,19 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
+        else if (moveTargetObject.CompareTag("CustomerCounter"))
+        {
+            if (heldCup != null)
+            {
+                Destroy(heldCup);
+                heldCup = null;
+                Debug.Log("[PlayerController] Delivered cup at CustomerCounter. Money collected.");
+            }
+            else if (debugClickMove)
+            {
+                Debug.Log("[PlayerController] Reached CustomerCounter but no cup to deliver.");
+            }
+        }
     }
 
     private void TryInteract()
