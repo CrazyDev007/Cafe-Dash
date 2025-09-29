@@ -127,7 +127,7 @@ public class PlayerController : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100f))
         {
-            if (hit.collider.CompareTag("BeanResource") || hit.collider.CompareTag("CoffeeMachine"))
+            if (hit.collider.CompareTag("BeanResource") || hit.collider.CompareTag("CoffeeMachine") || hit.collider.CompareTag("CustomerCounter"))
             {
                 // Use the exact hit point so the player moves to the clicked location on the object
                 moveTargetPosition = hit.point;
