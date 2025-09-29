@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     public Transform beanStackParent;
     public GameObject beanBagPrefab;
     public Transform cupHoldPoint;
+    private bool awaitingBrewCup = false;
 
     private void OnEnable()
     {
@@ -55,6 +56,16 @@ public class PlayerController : MonoBehaviour
         if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
         {
             HandleClickToMove();
+        }
+        // If we are expecting a brewed cup to appear in the player's cup holder, capture it as heldCup when it spawns
+        if (awaitingBrewCup && heldCup == null && cupHoldPoint != null && cupHoldPoint.childCount > 0)
+        {
+            heldCup = cupHoldPoint.GetChild(0).gameObject;
+            awaitingBrewCup = false;
+            if (debugClickMove)
+            {
+                Debug.Log("[PlayerController] Brew complete: cup attached to player's cupHoldPoint and registered as heldCup");
+            }
         }
     }
     
@@ -142,16 +153,24 @@ public class PlayerController : MonoBehaviour
         else if (moveTargetObject.CompareTag("CoffeeMachine"))
         {
             CoffeeMachine machine = moveTargetObject.GetComponent<CoffeeMachine>();
-            if (beanStack.Count > 0 && machine != null)
+            if (machine == null) return;
+            
+            // First priority: insert bean if player has beans and machine is ready
+            if (beanStack.Count > 0 && !machine.HasCup())
             {
-                machine.InsertBean();
+                // Brew directly to the player's hand by spawning the cup under cupHoldPoint
+                machine.InsertBean(cupHoldPoint);
                 RemoveBean();
+                awaitingBrewCup = true;
             }
-            else if (machine != null && machine.HasCup() && heldCup == null)
+            // Second priority: take cup if machine has one and player doesn't
+            else if (machine.HasCup() && heldCup == null)
             {
-                heldCup = machine.TakeCup();
-                heldCup.transform.SetParent(cupHoldPoint);
-                heldCup.transform.localPosition = Vector3.zero;
+                GameObject cupFromMachine = machine.TakeCup();
+                if (cupFromMachine != null)
+                {
+                    AttachCupToPlayer(cupFromMachine);
+                }
             }
         }
     }
@@ -168,16 +187,24 @@ public class PlayerController : MonoBehaviour
             else if (hit.collider.CompareTag("CoffeeMachine"))
             {
                 CoffeeMachine machine = hit.collider.GetComponent<CoffeeMachine>();
-                if (beanStack.Count > 0 && machine != null)
+                if (machine == null) return;
+                
+                // First priority: insert bean if player has beans and machine is ready
+                if (beanStack.Count > 0 && !machine.HasCup())
                 {
-                    machine.InsertBean();
+                    // Brew directly to the player's hand by spawning the cup under cupHoldPoint
+                    machine.InsertBean(cupHoldPoint);
                     RemoveBean();
+                    awaitingBrewCup = true;
                 }
-                else if (machine != null && machine.HasCup() && heldCup == null)
+                // Second priority: take cup if machine has one and player doesn't
+                else if (machine.HasCup() && heldCup == null)
                 {
-                    heldCup = machine.TakeCup();
-                    heldCup.transform.SetParent(cupHoldPoint);
-                    heldCup.transform.localPosition = Vector3.zero;
+                    GameObject cupFromMachine = machine.TakeCup();
+                    if (cupFromMachine != null)
+                    {
+                        AttachCupToPlayer(cupFromMachine);
+                    }
                 }
             }
             else if (hit.collider.CompareTag("Customer"))
@@ -209,6 +236,63 @@ public class PlayerController : MonoBehaviour
         {
             Destroy(beanStack[beanStack.Count - 1]);
             beanStack.RemoveAt(beanStack.Count - 1);
+        }
+    }
+
+    // Attach a cup GameObject to the player's cup hold point reliably
+    private void AttachCupToPlayer(GameObject cup)
+    {
+        if (cup == null)
+        {
+            Debug.LogWarning("AttachCupToPlayer: cup is null");
+            return;
+        }
+
+        if (cupHoldPoint == null)
+        {
+            Debug.LogError("AttachCupToPlayer: cupHoldPoint is not assigned on PlayerController!");
+            return;
+        }
+
+        try
+        {
+            // First, disable any physics components that might interfere
+            Rigidbody rb = cup.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.isKinematic = true;
+            }
+
+            // Store the world position/rotation before changing parent
+            Vector3 worldPos = cup.transform.position;
+            Quaternion worldRot = cup.transform.rotation;
+
+            // Set the parent directly to cupHoldPoint
+            cup.transform.SetParent(cupHoldPoint);
+
+            // Restore world position/rotation temporarily
+            cup.transform.position = worldPos;
+            cup.transform.rotation = worldRot;
+
+            // Now smoothly move to the hold point
+            cup.transform.position = cupHoldPoint.position;
+            cup.transform.rotation = cupHoldPoint.rotation;
+
+            // Finally, zero out local transform
+            cup.transform.localPosition = Vector3.zero;
+            cup.transform.localRotation = Quaternion.identity;
+
+            // Store reference
+            heldCup = cup;
+
+            if (debugClickMove)
+            {
+                Debug.Log($"Cup successfully attached to player at position {cup.transform.position}");
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to attach cup to player: {e.Message}");
         }
     }
 }
