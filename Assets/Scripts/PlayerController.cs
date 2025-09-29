@@ -12,9 +12,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private string moveActionName = "Move";
     private InputAction moveAction;
     [SerializeField] private float clickMoveStopDistance = 0.5f;
-    private Transform moveTarget;
+    private Vector3 moveTargetPosition;
     private GameObject moveTargetObject;
     private bool isMovingToTarget = false;
+    [SerializeField] private bool debugClickMove = true;
+    [SerializeField] private bool rotateOnMove = true;
+    [SerializeField] private float rotationSpeed = 720f; // degrees per second
     public Transform beanStackParent;
     public GameObject beanBagPrefab;
     public Transform cupHoldPoint;
@@ -36,9 +39,13 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         // If player is moving to a clicked target, drive movement there. Otherwise allow manual input movement.
-        if (isMovingToTarget && moveTarget != null)
+        if (isMovingToTarget)
         {
             MoveToTarget();
+        }
+        else
+        {
+            Move();
         }
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
@@ -50,19 +57,40 @@ public class PlayerController : MonoBehaviour
             HandleClickToMove();
         }
     }
+    
+    private void Move()
+    {
+        if (moveAction == null) return;
+        Vector2 input = moveAction.ReadValue<Vector2>();
+        // For a 3D game we map the 2D input to the XZ plane: input.x -> X, input.y -> Z
+        Vector3 dir = new Vector3(input.x, 0f, input.y);
+        transform.Translate(dir * moveSpeed * Time.deltaTime, Space.World);
+        if (rotateOnMove && dir.sqrMagnitude > 0.001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(dir, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+        }
+        // Player rotation is now prevented.
+    }
     private void MoveToTarget()
     {
-        if (moveTarget == null)
+        // Move directly towards the target in world space (we use the hit point stored in moveTargetPosition)
+        Vector3 targetPos = moveTargetPosition;
+        // Keep player's Y the same so movement happens on the XZ plane for a 3D game
+        targetPos.y = transform.position.y;
+        if (debugClickMove)
         {
-            isMovingToTarget = false;
-            return;
+            Debug.DrawLine(transform.position, targetPos, Color.green);
         }
-
-        // Move directly towards the target in world space
-        Vector3 targetPos = moveTarget.position;
-        // Keep player's z the same if working in 2D/top-down
-        targetPos.z = transform.position.z;
-        transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+        // Move towards the target position on XZ plane
+        Vector3 newPos = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+        Vector3 moveDelta = newPos - transform.position;
+        transform.position = newPos;
+        if (rotateOnMove && moveDelta.sqrMagnitude > 0.0001f)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(moveDelta.normalized, Vector3.up);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
+        }
 
         float dist = Vector3.Distance(transform.position, targetPos);
         if (dist <= clickMoveStopDistance)
@@ -70,8 +98,12 @@ public class PlayerController : MonoBehaviour
             // Arrived
             isMovingToTarget = false;
             ArriveAtTarget();
-            moveTarget = null;
+            moveTargetPosition = Vector3.zero;
             moveTargetObject = null;
+            if (debugClickMove)
+            {
+                Debug.Log($"[PlayerController] Arrived at targetPos {targetPos}");
+            }
         }
     }
 
@@ -86,9 +118,15 @@ public class PlayerController : MonoBehaviour
         {
             if (hit.collider.CompareTag("BeanResource") || hit.collider.CompareTag("CoffeeMachine"))
             {
-                moveTarget = hit.collider.transform;
+                // Use the exact hit point so the player moves to the clicked location on the object
+                moveTargetPosition = hit.point;
                 moveTargetObject = hit.collider.gameObject;
                 isMovingToTarget = true;
+                if (debugClickMove)
+                {
+                    Debug.Log($"[PlayerController] Clicked {moveTargetObject.name} at hit.point={hit.point}, collider.bounds.center={hit.collider.bounds.center}, collider.transform.position={hit.collider.transform.position}");
+                    Debug.DrawLine(cam.transform.position, hit.point, Color.cyan, 2f);
+                }
             }
         }
     }
