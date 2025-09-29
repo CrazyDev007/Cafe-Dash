@@ -1,13 +1,19 @@
 using UnityEngine;
 using System.Collections;
+using Game.Domain.Interfaces;
 
 public class CustomerManager : MonoBehaviour
 {
     public Transform customerSpawnPoint;
     public GameObject customerPrefab;
     public UIManager uiManager;
+    private ICustomerService customerService;
     private GameObject currentCustomer;
-    private bool waiting = false;
+
+    public void Initialize(ICustomerService service)
+    {
+        customerService = service;
+    }
 
     void Start()
     {
@@ -18,25 +24,25 @@ public class CustomerManager : MonoBehaviour
     {
         currentCustomer = Instantiate(customerPrefab, customerSpawnPoint.position, Quaternion.identity);
         currentCustomer.tag = "Customer";
-        waiting = true;
+        customerService.OnCustomerSpawned();
     }
 
     public bool IsWaiting()
     {
-        return waiting;
+        return customerService.IsWaiting;
     }
 
     public void ReceiveCoffee()
     {
-        if (waiting)
+        if (customerService.IsWaiting)
         {
+            customerService.OnCustomerServed();
             StartCoroutine(HandleDelivery());
         }
     }
 
     IEnumerator HandleDelivery()
     {
-        waiting = false;
         uiManager.AnimateMoney(currentCustomer.transform.position);
         Destroy(currentCustomer);
         yield return new WaitForSeconds(1f);

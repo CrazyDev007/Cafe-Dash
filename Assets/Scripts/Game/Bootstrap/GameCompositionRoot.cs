@@ -1,15 +1,19 @@
 using UnityEngine;
+using Game.Application; // Assuming CustomerService is in Game.Application
+using Game.Domain.Interfaces; // For ICustomerService
 
 public class GameCompositionRoot : MonoBehaviour
 {
     [SerializeField] private UIManager uiManager;
     [SerializeField] private CoffeeMachine coffeeMachine;
     [SerializeField] private PlayerController playerController;
+    [SerializeField] private CustomerManager customerManager;
     
     private IScoreService _scoreService;
     private PlayerPrefsScoreRepository _scoreRepository;
     private ICoffeeBrewingService _brewingService;
     private ICupInventoryService _cupInventoryService;
+    private ICustomerService _customerService;
 
     private void Awake()
     {
@@ -26,6 +30,8 @@ public class GameCompositionRoot : MonoBehaviour
         // Load initial score from repository
         int savedScore = _scoreRepository.LoadScore();
         // You'd need to modify ScoreService to support initial value
+
+        _customerService = new CustomerService(_scoreService);
     }
 
     private void InitializeUI()
@@ -45,6 +51,11 @@ public class GameCompositionRoot : MonoBehaviour
         {
             _cupInventoryService = new CupInventoryService(playerController.cupHoldPoint);
             playerController.SetCupInventoryService(_cupInventoryService);
+        }
+
+        if (customerManager != null)
+        {
+            customerManager.Initialize(_customerService);
         }
     }
 

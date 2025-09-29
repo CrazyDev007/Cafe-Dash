@@ -1138,6 +1138,7 @@ MonoBehaviour:
   uiManager: {fileID: 51430939}
   coffeeMachine: {fileID: 1967084327}
   playerController: {fileID: 1851587891}
+  customerManager: {fileID: 1811535592}
 --- !u!4 &1844255790
 Transform:
   m_ObjectHideFlags: 0
