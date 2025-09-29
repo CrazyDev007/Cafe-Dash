@@ -151,7 +151,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 742633812}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &18034517
 BoxCollider:
@@ -698,9 +698,6 @@ Transform:
   - {fileID: 6736281337559484780}
   - {fileID: 58524312}
   - {fileID: 1744714315}
-  - {fileID: 2003354946}
-  - {fileID: 18034516}
-  - {fileID: 1967084328}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1205547134
@@ -1139,6 +1136,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameCompositionRoot
   uiManager: {fileID: 51430939}
+  coffeeMachine: {fileID: 1967084327}
+  playerController: {fileID: 1851587891}
 --- !u!4 &1844255790
 Transform:
   m_ObjectHideFlags: 0
@@ -1438,7 +1437,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CoffeeMachine
   cupPrefab: {fileID: 1274264253464792560, guid: c48bceb64d000f94d80b075b9c308094, type: 3}
-  cupSpawnPoint: {fileID: 1911659178}
   processTime: 2
 --- !u!4 &1967084328
 Transform:
@@ -1454,7 +1452,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1911659178}
-  m_Father: {fileID: 742633812}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1967084329
 MeshRenderer:
@@ -1579,7 +1577,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 742633812}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &2003354947
 MeshRenderer:
@@ -1761,5 +1759,8 @@ SceneRoots:
   - {fileID: 1851587892}
   - {fileID: 51430938}
   - {fileID: 1502285175}
+  - {fileID: 2003354946}
+  - {fileID: 18034516}
+  - {fileID: 1967084328}
   - {fileID: 742633812}
   - {fileID: 1844255790}

@@ -7,7 +7,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private int maxBeans = 3;
     [SerializeField] private List<GameObject> beanStack = new List<GameObject>();
-    [HideInInspector] private GameObject heldCup;
+    [HideInInspector] private GameObject heldCup; // Deprecated, use service
     [SerializeField] private InputActionAsset inputActions;
     [SerializeField] private string moveActionName = "Move";
     private InputAction moveAction;
@@ -23,6 +23,13 @@ public class PlayerController : MonoBehaviour
     public Transform cupHoldPoint;
     private bool awaitingBrewCup = false;
     public CustomerManager customerManager;
+
+    private ICupInventoryService _cupInventoryService;
+
+    public void SetCupInventoryService(ICupInventoryService service)
+    {
+        _cupInventoryService = service;
+    }
 
     private void OnEnable()
     {
@@ -58,14 +65,14 @@ public class PlayerController : MonoBehaviour
         {
             HandleClickToMove();
         }
-        // If we are expecting a brewed cup to appear in the player's cup holder, capture it as heldCup when it spawns
-        if (awaitingBrewCup && heldCup == null && cupHoldPoint != null && cupHoldPoint.childCount > 0)
+        // If we are expecting a brewed cup to appear in the player's cup holder, capture it via service
+        if (awaitingBrewCup && !_cupInventoryService.HasCup && cupHoldPoint != null && cupHoldPoint.childCount > 0)
         {
-            heldCup = cupHoldPoint.GetChild(0).gameObject;
+            _cupInventoryService.AttachCup(cupHoldPoint.GetChild(0).gameObject);
             awaitingBrewCup = false;
             if (debugClickMove)
             {
-                Debug.Log("[PlayerController] Brew complete: cup attached to player's cupHoldPoint and registered as heldCup");
+                Debug.Log("[PlayerController] Brew complete: cup attached via inventory service");
             }
         }
     }
@@ -165,42 +172,40 @@ public class PlayerController : MonoBehaviour
                 awaitingBrewCup = true;
             }
             // Second priority: take cup if machine has one and player doesn't
-            else if (machine.HasCup() && heldCup == null)
+            else if (machine.HasCup() && !_cupInventoryService.HasCup)
             {
                 GameObject cupFromMachine = machine.TakeCup();
                 if (cupFromMachine != null)
                 {
-                    AttachCupToPlayer(cupFromMachine);
+                    _cupInventoryService.AttachCup(cupFromMachine);
                 }
             }
         }
         else if (moveTargetObject.CompareTag("CustomerCounter"))
         {
-            if (heldCup != null)
+            if (_cupInventoryService.HasCup)
             {
                 if (customerManager != null && customerManager.IsWaiting())
                 {
                     customerManager.ReceiveCoffee();
-                    Destroy(heldCup);
-                    heldCup = null;
+                    _cupInventoryService.RemoveCup();
                     if (debugClickMove)
                     {
-                        Debug.Log("[PlayerController] Delivered cup at CustomerCounter. Customer served and money animated to UI.");
+                        Debug.Log("[PlayerController] Delivered cup at CustomerCounter via service. Customer served and money animated to UI.");
                     }
                 }
                 else
                 {
-                    Destroy(heldCup);
-                    heldCup = null;
+                    _cupInventoryService.RemoveCup();
                     if (debugClickMove)
                     {
-                        Debug.Log("[PlayerController] Delivered cup at CustomerCounter but no waiting customer manager found. Cup destroyed.");
+                        Debug.Log("[PlayerController] Delivered cup at CustomerCounter but no waiting customer. Cup removed via service.");
                     }
                 }
             }
             else if (debugClickMove)
             {
-                Debug.Log("[PlayerController] Reached CustomerCounter but no cup to deliver.");
+                Debug.Log("[PlayerController] Reached CustomerCounter but no cup in inventory.");
             }
         }
     }
@@ -228,23 +233,22 @@ public class PlayerController : MonoBehaviour
                     awaitingBrewCup = true;
                 }
                 // Second priority: take cup if machine has one and player doesn't
-                else if (machine.HasCup() && heldCup == null)
+                else if (machine.HasCup() && !_cupInventoryService.HasCup)
                 {
                     GameObject cupFromMachine = machine.TakeCup();
                     if (cupFromMachine != null)
                     {
-                        AttachCupToPlayer(cupFromMachine);
+                        _cupInventoryService.AttachCup(cupFromMachine);
                     }
                 }
             }
             else if (hit.collider.CompareTag("Customer"))
             {
                 CustomerManager customer = hit.collider.GetComponent<CustomerManager>();
-                if (heldCup != null && customer != null && customer.IsWaiting())
+                if (_cupInventoryService.HasCup && customer != null && customer.IsWaiting())
                 {
                     customer.ReceiveCoffee();
-                    Destroy(heldCup);
-                    heldCup = null;
+                    _cupInventoryService.RemoveCup();
                 }
             }
         }
@@ -269,60 +273,12 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Attach a cup GameObject to the player's cup hold point reliably
+    // Deprecated: Use _cupInventoryService.AttachCup instead
     private void AttachCupToPlayer(GameObject cup)
     {
-        if (cup == null)
+        if (_cupInventoryService != null)
         {
-            Debug.LogWarning("AttachCupToPlayer: cup is null");
-            return;
-        }
-
-        if (cupHoldPoint == null)
-        {
-            Debug.LogError("AttachCupToPlayer: cupHoldPoint is not assigned on PlayerController!");
-            return;
-        }
-
-        try
-        {
-            // First, disable any physics components that might interfere
-            Rigidbody rb = cup.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.isKinematic = true;
-            }
-
-            // Store the world position/rotation before changing parent
-            Vector3 worldPos = cup.transform.position;
-            Quaternion worldRot = cup.transform.rotation;
-
-            // Set the parent directly to cupHoldPoint
-            cup.transform.SetParent(cupHoldPoint);
-
-            // Restore world position/rotation temporarily
-            cup.transform.position = worldPos;
-            cup.transform.rotation = worldRot;
-
-            // Now smoothly move to the hold point
-            cup.transform.position = cupHoldPoint.position;
-            cup.transform.rotation = cupHoldPoint.rotation;
-
-            // Finally, zero out local transform
-            cup.transform.localPosition = Vector3.zero;
-            cup.transform.localRotation = Quaternion.identity;
-
-            // Store reference
-            heldCup = cup;
-
-            if (debugClickMove)
-            {
-                Debug.Log($"Cup successfully attached to player at position {cup.transform.position}");
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Failed to attach cup to player: {e.Message}");
+            _cupInventoryService.AttachCup(cup);
         }
     }
 }
