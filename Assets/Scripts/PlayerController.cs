@@ -22,6 +22,7 @@ public class PlayerController : MonoBehaviour
     public GameObject beanBagPrefab;
     public Transform cupHoldPoint;
     private bool awaitingBrewCup = false;
+    public CustomerManager customerManager;
 
     private void OnEnable()
     {
@@ -177,9 +178,25 @@ public class PlayerController : MonoBehaviour
         {
             if (heldCup != null)
             {
-                Destroy(heldCup);
-                heldCup = null;
-                Debug.Log("[PlayerController] Delivered cup at CustomerCounter. Money collected.");
+                if (customerManager != null && customerManager.IsWaiting())
+                {
+                    customerManager.ReceiveCoffee();
+                    Destroy(heldCup);
+                    heldCup = null;
+                    if (debugClickMove)
+                    {
+                        Debug.Log("[PlayerController] Delivered cup at CustomerCounter. Customer served and money animated to UI.");
+                    }
+                }
+                else
+                {
+                    Destroy(heldCup);
+                    heldCup = null;
+                    if (debugClickMove)
+                    {
+                        Debug.Log("[PlayerController] Delivered cup at CustomerCounter but no waiting customer manager found. Cup destroyed.");
+                    }
+                }
             }
             else if (debugClickMove)
             {

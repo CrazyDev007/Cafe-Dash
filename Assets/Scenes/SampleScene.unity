@@ -259,9 +259,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f0d5aa4a6c92634dbdfdbcf63e5cc74, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIManager
-  scoreText: {fileID: 0}
+  scoreText: {fileID: 1205547136}
   scoreDisplay: {fileID: 1205547135}
-  moneyPrefab: {fileID: 0}
+  moneyPrefab: {fileID: 4926592279912229918, guid: 574d8bcca3a25ae488eb5c6e1d5338e3, type: 3}
 --- !u!4 &51430938
 Transform:
   m_ObjectHideFlags: 0
@@ -1145,13 +1145,14 @@ MonoBehaviour:
   beanStack: []
   inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   moveActionName: Move
-  clickMoveStopDistance: 0.5
+  clickMoveStopDistance: 1
   debugClickMove: 1
   rotateOnMove: 1
   rotationSpeed: 720
   beanStackParent: {fileID: 1656323331}
   beanBagPrefab: {fileID: 860677642572481598, guid: ec7d155151489e647a6abbf0eb47d328, type: 3}
   cupHoldPoint: {fileID: 611888035}
+  customerManager: {fileID: 1811535592}
 --- !u!4 &1851587892
 Transform:
   m_ObjectHideFlags: 0

@@ -1,9 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class UIManager : MonoBehaviour
 {
-    public Text scoreText;
+    public TextMeshProUGUI scoreText;
     public Transform scoreDisplay;
     public GameObject moneyPrefab;
     private int score = 0;
