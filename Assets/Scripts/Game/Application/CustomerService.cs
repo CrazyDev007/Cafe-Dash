@@ -6,7 +6,7 @@ namespace Game.Application
     {
         private readonly IScoreService _scoreService;
         private bool _waiting = false;
-        private readonly int _customerReward = 10; // Assuming a reward value for serving a customer
+        private readonly int _customerReward = 1; // Changed reward value to 1 for serving a customer
 
         public CustomerService(IScoreService scoreService)
         {

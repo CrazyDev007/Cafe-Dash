@@ -20,7 +20,6 @@ public class UIManager : MonoBehaviour
     {
         GameObject money = Instantiate(moneyPrefab, fromPosition, Quaternion.identity);
         StartCoroutine(MoveMoneyToScore(money));
-        _scoreService.AddScore(1);
     }
 
     private void UpdateScoreDisplay(int score)
