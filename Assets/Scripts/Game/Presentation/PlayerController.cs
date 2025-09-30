@@ -61,9 +61,18 @@ public class PlayerController : MonoBehaviour
             TryInteract();
         }
         // Handle mouse click -> move to bean resource or coffee machine (using new Input System)
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        if (Pointer.current != null && Pointer.current.press.wasPressedThisFrame)
         {
             HandleClickToMove();
+        }
+        // Handle touch input for mobile devices
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            if (touch.phase == UnityEngine.TouchPhase.Began)
+            {
+                HandleClickToMove();
+            }
         }
         // If we are expecting a brewed cup to appear in the player's cup holder, capture it via service
         if (awaitingBrewCup && !_cupInventoryService.HasCup && cupHoldPoint != null && cupHoldPoint.childCount > 0)
@@ -130,7 +139,7 @@ public class PlayerController : MonoBehaviour
     {
     Camera cam = Camera.main;
     if (cam == null) return;
-    Vector2 mousePos = Mouse.current != null ? Mouse.current.position.ReadValue() : Vector2.zero;
+    Vector2 mousePos = Pointer.current != null ? Pointer.current.position.ReadValue() : Vector2.zero;
     Ray ray = cam.ScreenPointToRay(new Vector3(mousePos.x, mousePos.y, 0f));
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, 100f))
